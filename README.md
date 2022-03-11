@@ -1,8 +1,8 @@
-# Toy-Database-Project
+# Toy-Database
 
 This GitHub repository is made to store the database project from CS 457: Database Management Systems course at the University of Nevada, Reno. `README.md` is composed of all the Project Assignments documentation that describe the iteration of the toy database.
 
-# Project Assignmnet 1 Documentation
+# Project Assignment 1 Documentation
 
 - Author: Araam Zaremehrjardi
 - Assignment: Project Assignment 1 - Metadata Management
