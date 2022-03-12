@@ -199,4 +199,10 @@ public class DatabaseSystem {
             }
         }
     }
+
+    public void test_function() {
+        String[] values = { "1", "Gizmo", "19.99" };
+        execute("USE CS457_PA2");
+        databaseAbstraction.createRow("Product", values);
+    }
 }

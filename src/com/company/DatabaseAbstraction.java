@@ -246,4 +246,73 @@ public class DatabaseAbstraction {
 
         return headings;
     }
+
+    public boolean createRow(String table, String[] values) {
+        String[] types = null;
+
+        try {
+            types = getHeadings(table);
+            for (int typesIndex = 0; typesIndex < types.length; typesIndex++) {
+                types[typesIndex] = types[typesIndex].split(" ")[1];
+            }
+        } catch (Exception exception) {
+            return false;
+        }
+
+        String row = "";
+
+        for (int columnIndex = 0; columnIndex < types.length; columnIndex++) {
+            String value = values[columnIndex];
+            String type = types[columnIndex];
+
+            if (type.matches("int")) {
+                Integer row_value = Integer.parseInt(values[columnIndex]);
+                row += row_value;
+            } else if (type.matches("float")) {
+                Float row_value = Float.parseFloat(values[columnIndex]);
+                row += row_value;
+            } else if (type.contains("varchar")) {
+                String processed_type = type.replace("("," ").replace(")","");
+                System.out.println(processed_type);
+                String[] tokens = processed_type.split(" ");
+                if (value.length() > Integer.parseInt(tokens[1])) {
+                    return false;
+                }
+
+                row += value;
+            } else {
+                return false;
+            }
+
+            row += "\t";
+        }
+
+        System.out.println(row);
+
+        return true;
+
+    }
+
+    private String[] getHeadings(String table) throws Exception {
+        String tablePath = currentDatabase + table + ".txt";
+        File location = new File(tablePath);
+
+        BufferedReader headerReader = null;
+        String headings[] = null;
+
+        if (!location.exists()) {
+            throw new Exception();
+        }
+
+        try {
+            headerReader = new BufferedReader(new FileReader(location));
+        } catch (Exception exception) {}
+
+        try {
+            headings = headerReader.readLine().split("\t");
+        } catch (Exception exception) {}
+
+        return headings;
+
+    }
 }

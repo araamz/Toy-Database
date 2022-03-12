@@ -4,3 +4,7 @@ Toy-Database-Project.iml
 .DS_Store
 testing/.DS_Store
 Project Assignments/.DS_Store
+src/com/company/DatabaseAbstraction.class
+src/com/company/DatabaseSystem.class
+src/com/company/TestDriver.class
+databases
