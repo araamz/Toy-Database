@@ -30,9 +30,8 @@ public class TestDriver {
     public static void main(String args[]) throws IOException {
         DatabaseSystem database = new DatabaseSystem();
         BufferedReader reader = null;
-        database.test_function();
 
-        /* NOTE: Used to check if a file argument is present otherwise standard input is used.
+        //NOTE: Used to check if a file argument is present otherwise standard input is used.
         if (args.length == 1) {
             reader = new BufferedReader(new FileReader(args[0]));
         } else  {
@@ -49,7 +48,7 @@ public class TestDriver {
             database.execute(command);
         }
 
-        System.out.println("All Done.");*/
+        System.out.println("All Done.");
     }
 
 }

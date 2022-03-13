@@ -1,5 +1,7 @@
 package com.company;
 
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -44,15 +46,8 @@ public class DatabaseSystem {
     - Return Type: void
      */
     public void execute(String command) {
-        String processed_string = command.replace("(", " ").replace(")", " ").replace(",", "").replace(";","");
-        String[] tokens = processed_string.split(" ");
-        Queue<String> token_queue = new LinkedList<String>();
 
-        for (int i = 0; i < tokens.length; i++) {
-            if (tokens[i] != "") {
-                token_queue.add(tokens[i]);
-            }
-        }
+        Queue<String> token_queue = lexicalAnalysis(command);
 
         switch (token_queue.remove()) {
             case "CREATE": {
@@ -90,7 +85,7 @@ public class DatabaseSystem {
 
                             if (type.matches("varchar") || type.matches("char")) {
                                 String variable = token_queue.remove();
-                                type = "%s(%s)".formatted(type,variable);
+                                type = "%s(%s)".formatted(type, variable);
                                 databaseAbstraction.addColumn(table, label, type);
                             } else {
                                 databaseAbstraction.addColumn(table, label, type);
@@ -154,7 +149,7 @@ public class DatabaseSystem {
 
                                 if (type.matches("varchar") || type.matches("char")) {
                                     String variable = token_queue.remove();
-                                    type = "%s(%s)".formatted(type,variable);
+                                    type = "%s(%s)".formatted(type, variable);
                                     databaseAbstraction.addColumn(table, label, type);
                                 } else {
                                     databaseAbstraction.addColumn(table, label, type);
@@ -188,7 +183,8 @@ public class DatabaseSystem {
                         for (int columnIndex = 0; columnIndex < columns.length; columnIndex++) {
                             System.out.print(columns[columnIndex]);
                             if (columnIndex < columns.length - 1) {
-                                System.out.print(" | ");}
+                                System.out.print(" | ");
+                            }
                         }
 
                         System.out.println();
@@ -197,12 +193,75 @@ public class DatabaseSystem {
                     }
                 }
             }
+
+            case "INSERT":
+
+                switch (token_queue.remove()) {
+
+                    case "INTO":
+
+                        String table = token_queue.remove();
+                        token_queue.remove(); // Remove values token
+                        Queue<String> values = new LinkedList<String>();
+
+                        while (!token_queue.isEmpty()) {
+                            String value = token_queue.remove();
+                            values.add(value);
+                        }
+
+                        String[] row_values = new String[values.size()];
+                        values.toArray(row_values);
+                        if (databaseAbstraction.appendRow("Product", row_values)) {
+                            System.out.println("1 new record inserted.");
+                        } else {
+                            System.out.println("0 new record inserted.");
+                        }
+
+                        return;
+
+                }
         }
     }
 
-    public void test_function() {
-        String[] values = { "1", "Gizmo", "19.99" };
-        execute("USE CS457_PA2");
-        databaseAbstraction.createRow("Product", values);
+    private Queue<String> lexicalAnalysis(String string) {
+
+        String processed_string = string.replace("("," ");
+        processed_string = processed_string.replace(")", " ");
+        processed_string = processed_string.replace(",", "");
+        processed_string = processed_string.replace(";","");
+        processed_string = processed_string.replace("\t"," ");
+        processed_string = processed_string.replace("'","");
+
+        String[] tokens = processed_string.split(" ");
+        Queue<String> token_queue = new LinkedList<String>();
+
+        for (int i = 0; i < tokens.length; i++) {
+            if (tokens[i] != "") {
+
+                String token = tokens[i];
+
+                switch (token) {
+                    case "select": {
+                        token = "SELECT";
+                        break;
+                    }
+
+                    case "insert": {
+                        token = "INSERT";
+                        break;
+                    }
+
+                    case "into": {
+                        token = "INTO";
+                        break;
+                    }
+
+                }
+
+                token_queue.add(token);
+            }
+        }
+
+        return token_queue;
     }
 }

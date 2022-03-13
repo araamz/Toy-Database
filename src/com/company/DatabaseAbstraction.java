@@ -1,6 +1,7 @@
 package com.company;
 
 import java.io.*;
+import java.util.ArrayList;
 
 /*
     Author: Araam Zaremehrjardi
@@ -122,6 +123,7 @@ public class DatabaseAbstraction {
         try {
             location.createNewFile();
         } catch (IOException exception) {
+            exception.printStackTrace();
             return false;
         }
 
@@ -173,7 +175,6 @@ public class DatabaseAbstraction {
         String tablePath = currentDatabase + table + ".txt";
         File location = new File(tablePath);
 
-        BufferedReader tableReader = null;
         String headings[] = null;
 
         FileWriter tableWriter = null;
@@ -183,12 +184,10 @@ public class DatabaseAbstraction {
         }
 
         try {
-            tableReader = new BufferedReader(new FileReader(location));
-        } catch (Exception exception) {}
-
-        try {
-            headings = tableReader.readLine().split("\t");
-        } catch (Exception exception) {}
+            headings = getHeadings(table);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         if (headings != null ) {
 
@@ -203,13 +202,16 @@ public class DatabaseAbstraction {
 
         try {
             tableWriter = new FileWriter(location, true);
-        } catch (Exception exception) {}
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
 
         try {
             tableWriter.append(header);
             tableWriter.close();
-            tableReader.close();
-        } catch (Exception exception) {}
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
 
         return true;
     }
@@ -238,16 +240,58 @@ public class DatabaseAbstraction {
 
         try {
             tableReader = new BufferedReader(new FileReader(location));
-        } catch (Exception exception) {}
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
 
         try {
             headings = tableReader.readLine().split("\t");
-        } catch (Exception exception) {}
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
 
         return headings;
     }
 
-    public boolean createRow(String table, String[] values) {
+    public boolean appendRow(String table, String[] values) {
+        String tablePath = currentDatabase + table + ".txt";
+        File location = new File(tablePath);
+
+        BufferedWriter tableWriter = null;
+        String row = null;
+
+        try {
+            row = createRow(table, values);
+        } catch (Exception exception) {
+            exception.printStackTrace();
+            return false;
+        }
+
+        if (!location.exists()) {
+            return false;
+        }
+
+        try {
+            tableWriter = new BufferedWriter(new FileWriter(location, true));
+        } catch (Exception exception) {
+            exception.printStackTrace();
+            return false;
+        }
+
+        try {
+            tableWriter.newLine();
+            tableWriter.append(row);
+            tableWriter.close();
+        } catch (IOException exception) {
+            exception.printStackTrace();
+            return false;
+        }
+
+        return true;
+
+    }
+
+    private String createRow(String table, String[] values) throws Exception {
         String[] types = null;
 
         try {
@@ -256,7 +300,7 @@ public class DatabaseAbstraction {
                 types[typesIndex] = types[typesIndex].split(" ")[1];
             }
         } catch (Exception exception) {
-            return false;
+            exception.printStackTrace();
         }
 
         String row = "";
@@ -273,23 +317,21 @@ public class DatabaseAbstraction {
                 row += row_value;
             } else if (type.contains("varchar")) {
                 String processed_type = type.replace("("," ").replace(")","");
-                System.out.println(processed_type);
                 String[] tokens = processed_type.split(" ");
-                if (value.length() > Integer.parseInt(tokens[1])) {
-                    return false;
+                Integer varchar_length_constraint = Integer.parseInt(tokens[1]);
+                if (value.length() > varchar_length_constraint) {
+                    throw new Exception("USER EXCEPTION - createRow: varchar(" + varchar_length_constraint + ") is not satisfied.");
                 }
 
                 row += value;
             } else {
-                return false;
+                throw new Exception("USER EXCEPTION - createRow: type not recognized.");
             }
 
             row += "\t";
         }
 
-        System.out.println(row);
-
-        return true;
+        return row;
 
     }
 
@@ -301,16 +343,25 @@ public class DatabaseAbstraction {
         String headings[] = null;
 
         if (!location.exists()) {
-            throw new Exception();
+            throw new Exception("getHeadings: Can't find table " + table + ".");
         }
 
         try {
             headerReader = new BufferedReader(new FileReader(location));
-        } catch (Exception exception) {}
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
 
         try {
-            headings = headerReader.readLine().split("\t");
-        } catch (Exception exception) {}
+            String header = headerReader.readLine();
+            if (header != null) {
+                headings = header.split("\t");
+            } else {
+                return null;
+            }
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
 
         return headings;
 
