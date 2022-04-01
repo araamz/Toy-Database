@@ -164,32 +164,129 @@ public class DatabaseSystem {
                 }
             }
 
+            case "DELETE": {
+                token_queue.remove(); // remove "from"
+                String table = token_queue.remove();
+                token_queue.remove(); // remove "where"
+
+                String key = token_queue.remove();
+
+                String operation = token_queue.remove(); // get "="
+                String value = token_queue.remove();
+
+                switch (operation) {
+                    case "=": {
+
+                        int records_deleted = databaseAbstraction.deleteRow_equality(table, key, value);
+
+                        if (records_deleted == 1) {
+                            System.out.println(records_deleted + " record deleted.");
+                        } else {
+                            System.out.println(records_deleted + " records deleted.");
+                        }
+
+                        break;
+                    }
+
+                    case ">": {
+
+                        int records_deleted = databaseAbstraction.deleteRow_greaterThan(table, key, value);
+
+                        if (records_deleted == 1) {
+                            System.out.println(records_deleted + " record deleted.");
+                        } else {
+                            System.out.println(records_deleted + " records deleted.");
+                        }
+
+                        break;
+
+                    }
+
+                }
+
+                return;
+
+            }
+
+            case "UPDATE": {
+                String table = token_queue.remove();
+                token_queue.remove(); // remove "set"
+                String selected_column = token_queue.remove(); // remove "select"
+                token_queue.remove(); // remove "="
+                String new_value = token_queue.remove();
+                token_queue.remove(); // remove "where"
+                String key = token_queue.remove();
+
+                String operation = token_queue.remove(); // get "="
+                String value = token_queue.remove();
+
+                switch (operation) {
+                    case "=": {
+                        int records_modified = databaseAbstraction.updateTable_equality(table, key, value, selected_column, new_value);
+
+                        if (records_modified == 1) {
+                            System.out.println(records_modified + " record modified.");
+                        } else {
+                            System.out.println(records_modified + " records modified.");
+                        }
+                    }
+                }
+                return;
+            }
+
             case "SELECT": {
                 String column = token_queue.remove();
 
                 switch (column) {
                     case "*": {
-                        String FROM = token_queue.remove();
+                        token_queue.remove(); // discard FROM
                         String table = token_queue.remove();
-                        String[] columns = null;
+                        Queue<String[]> rows = null;
 
                         try {
-                            columns = databaseAbstraction.selectColumn(table);
+                            rows = databaseAbstraction.selectColumn(table);
                         } catch (Exception exception) {
                             System.out.println("!Failed to query table " + table + " because it does not exist");
                             return;
                         }
+                        renderRows(rows);
+                        return;
+                    }
 
-                        for (int columnIndex = 0; columnIndex < columns.length; columnIndex++) {
-                            System.out.print(columns[columnIndex]);
-                            if (columnIndex < columns.length - 1) {
-                                System.out.print(" | ");
-                            }
+                    default: {
+
+                        LinkedList<String> columns = new LinkedList<>();
+                        Queue<String[]> rows = null;
+
+                        do {
+                            columns.add(column);
+                            column = token_queue.remove();
+                        } while (!column.matches("FROM"));
+
+                        String table = token_queue.remove();
+
+                        token_queue.remove(); // remove WHERE
+
+                        String key = token_queue.remove();
+
+                        String operation = token_queue.remove();
+
+                        String value = token_queue.remove();
+
+                        try {
+                            rows = databaseAbstraction.selectColumn(table, key, value, columns);
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
 
-                        System.out.println();
+                        // Data Storage: rows
+                        // Data Inputs: name, price
+                        // Individual Information Pass:
+
+                        renderRows(rows);
 
                         return;
+
                     }
                 }
             }
@@ -220,6 +317,29 @@ public class DatabaseSystem {
                         return;
 
                 }
+
+            default: {
+                break;
+            }
+        }
+    }
+
+    private void renderRows(Queue<String[]> rows) {
+        while (!rows.isEmpty()) {
+
+            String[] row = rows.poll();
+
+            if (row != null) {
+                for (int columnIndex = 0; columnIndex < row.length; columnIndex++) {
+                    System.out.print(row[columnIndex]);
+
+                    if (columnIndex < row.length - 1) {
+                        System.out.print("|");
+                    }
+                }
+
+                System.out.println();
+            }
         }
     }
 
@@ -253,6 +373,31 @@ public class DatabaseSystem {
 
                     case "into": {
                         token = "INTO";
+                        break;
+                    }
+
+                    case "from": {
+                        token = "FROM";
+                        break;
+                    }
+
+                    case "update": {
+                        token = "UPDATE";
+                        break;
+                    }
+
+                    case "set": {
+                        token = "SET";
+                        break;
+                    }
+
+                    case "where": {
+                        token = "WHERE";
+                        break;
+                    }
+
+                    case "delete": {
+                        token = "DELETE";
                         break;
                     }
 

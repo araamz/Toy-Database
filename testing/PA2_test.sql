@@ -27,7 +27,6 @@ where name = 'Gizmo';
 
 delete from product 
 where price > 150;
-
 select * from Product;
 
 select name, price 

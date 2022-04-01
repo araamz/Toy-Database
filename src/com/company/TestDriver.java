@@ -41,11 +41,26 @@ public class TestDriver {
 
         for (String command; (command = reader.readLine()) != null; ) {
 
-            if (command.matches(".EXIT")) {
+            if (command.contains("--")) {
+                command = "";
+            }
+
+            while (!command.contains(";")) {
+
+                command += reader.readLine();
+
+                if (command.equals(".exit") || command.equals(".EXIT")) {
+                    break;
+                }
+
+            }
+
+            if (command.equals(".exit") || command.equals(".EXIT")) {
                 break;
             }
 
             database.execute(command);
+
         }
 
         System.out.println("All Done.");

@@ -2,6 +2,8 @@ package com.company;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.Queue;
 
 /*
     Author: Araam Zaremehrjardi
@@ -49,7 +51,7 @@ public class DatabaseAbstraction {
     - Return Type: boolean
      */
     public boolean setCurrentDatabase(String database) {
-        String existingDatabasePath = databasesDirectory + database + "/";
+        String existingDatabasePath = databasesDirectory + database.toLowerCase() + "/";
         File location = new File(existingDatabasePath);
 
         if (location.isDirectory()) {
@@ -72,7 +74,7 @@ public class DatabaseAbstraction {
     - Return Type: boolean
     */
     public boolean createDatabase(String database) {
-        String databasePath = databasesDirectory + database;
+        String databasePath = databasesDirectory + database.toLowerCase();
         File location = new File(databasePath);
 
         return location.mkdirs();
@@ -90,7 +92,7 @@ public class DatabaseAbstraction {
     - Return Type: boolean
     */
     public boolean dropDatabase(String database) {
-        String databasePath = databasesDirectory + database;
+        String databasePath = databasesDirectory + database.toLowerCase();
         File location = new File(databasePath);
 
         return location.delete();
@@ -109,7 +111,7 @@ public class DatabaseAbstraction {
     - Return Type: boolean
     */
     public boolean createTable(String table) {
-        String tablePath = currentDatabase + table + ".txt";
+        String tablePath = currentDatabase + table.toLowerCase() + ".txt";
         File location = new File(tablePath);
 
         if (currentDatabase == null) {
@@ -143,7 +145,7 @@ public class DatabaseAbstraction {
     - Return Type: boolean
     */
     public boolean dropTable(String table) {
-        String tablePath = currentDatabase + table + ".txt";
+        String tablePath = currentDatabase + table.toLowerCase() + ".txt";
         File location = new File(tablePath);
 
         return location.delete();
@@ -172,7 +174,7 @@ public class DatabaseAbstraction {
         String expression = "%s %s\t";
         String header = expression.formatted(label, type);
 
-        String tablePath = currentDatabase + table + ".txt";
+        String tablePath = currentDatabase + table.toLowerCase() + ".txt";
         File location = new File(tablePath);
 
         String headings[] = null;
@@ -227,15 +229,15 @@ public class DatabaseAbstraction {
     1. table: String
     - Return Type: String[]
     */
-    public String[] selectColumn(String table) throws Exception {
-        String tablePath = currentDatabase + table + ".txt";
+    public Queue<String[]> selectColumn(String table) throws Exception {
+        String tablePath = currentDatabase + table.toLowerCase() + ".txt";
         File location = new File(tablePath);
 
         BufferedReader tableReader = null;
-        String headings[] = null;
+        Queue<String[]> rows = new LinkedList<>();
 
         if (!location.exists()) {
-            throw new Exception();
+            throw new Exception("USER EXCEPTION - selectColumn: table " + table + " does not exist.");
         }
 
         try {
@@ -245,16 +247,389 @@ public class DatabaseAbstraction {
         }
 
         try {
-            headings = tableReader.readLine().split("\t");
+            while (true) {
+                String row = tableReader.readLine();
+                if (row != null) {
+                    String[] columns = row.split("\t");
+                    rows.add(columns);
+                } else {
+                    break;
+                }
+            }
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
+        return rows;
+    }
+
+    public Queue<String[]> selectColumn(String table, String key, String value, LinkedList<String> selected_columns) throws Exception {
+        String tablePath = currentDatabase + table.toLowerCase() + ".txt";
+        File location = new File(tablePath);
+        BufferedReader tableReader = null;
+
+
+        Queue<String[]> rows = new LinkedList<>();
+        String[] headings = null;
+
+        if (!location.exists()) {
+            throw new Exception("USER EXCEPTION - selectColumn: table " + table + " does not exist.");
+        }
+
+        try {
+            tableReader = new BufferedReader(new FileReader(location));
         } catch (Exception exception) {
             exception.printStackTrace();
         }
 
-        return headings;
+        try {
+            headings = getHeadings(table);
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
+
+        Integer keyIndex = null;
+        Integer[] selectedColumns_indexes = new Integer[selected_columns.size()];
+        int selectedColumnsIndexes_index = 0;
+        for (int headingIndex = 0; headingIndex < headings.length; headingIndex++) {
+            String heading_value = headings[headingIndex].split(" ")[0];
+            if (heading_value.matches(key) && keyIndex == null) {
+                keyIndex = headingIndex;
+            } else if (!selected_columns.isEmpty()) {
+
+                for (int columnIndex = 0; columnIndex < selected_columns.size(); columnIndex++) {
+                    if (heading_value.matches(selected_columns.get(columnIndex))) {
+                        selectedColumns_indexes[selectedColumnsIndexes_index] = headingIndex;
+                        selectedColumnsIndexes_index++;
+                    }
+
+                }
+
+            }
+
+        }
+
+        try {
+
+            while (true) {
+                String row = tableReader.readLine();
+                if (row != null) {
+                    String[] columns = row.split("\t");
+                    String keyIndex_value = columns[keyIndex].split(" ")[0];
+                    if (!keyIndex_value.matches(value)) {
+
+                        String[] data_row = new String[selectedColumns_indexes.length];
+                        for (int columnIndex = 0; columnIndex < selectedColumns_indexes.length; columnIndex++) {
+                            data_row[columnIndex] = columns[selectedColumns_indexes[columnIndex]];
+
+                        }
+                        rows.add(data_row);
+                    }
+                } else {
+                    break;
+                }
+
+            }
+
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
+
+        return rows;
+
+    }
+
+    public int deleteRow_greaterThan(String table, String key, String value) {
+
+        String tablePath = currentDatabase + table.toLowerCase() + ".txt";
+        File location = new File(tablePath);
+        BufferedReader tableReader = null;
+
+        try {
+            tableReader = new BufferedReader(new FileReader(location));
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
+        String[] headings = null;
+        Integer keyIndex = null;
+        Integer selectedColumn_index = null;
+        try {
+            headings = getHeadings(table);
+        } catch (Exception exception) {
+            exception.printStackTrace();
+            return 0;
+        }
+
+        for (int headingIndex = 0; headingIndex < headings.length; headingIndex++) {
+            String heading_value = headings[headingIndex].split(" ")[0];
+            if (heading_value.matches(key) && keyIndex == null) {
+                keyIndex = headingIndex;
+            }
+
+        }
+
+        Queue<String[]> rows = new LinkedList<>();
+        int records_deleted = 0;
+        int header_skip = 0;
+
+        try {
+
+            while (true) {
+
+                String row = tableReader.readLine();
+
+                if (header_skip == 0) {
+                    header_skip++;
+                } else {
+                    if (row != null) {
+                        String[] columns = row.split("\t");
+                        if (!filterRow_greaterThan(columns, keyIndex, value)) {
+
+                            rows.add(columns);
+
+                        } else {
+                            records_deleted++;
+                        }
+
+                    } else {
+                        break;
+                    }
+                }
+
+            }
+
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
+
+        BufferedWriter tableWriter = null;
+        try {
+            tableWriter = new BufferedWriter(new FileWriter(location, false));
+            String heading_row = "";
+            for (int headingIndex = 0; headingIndex < headings.length; headingIndex++) {
+                String heading = headings[headingIndex] + "\t";
+                heading_row += heading;
+            }
+            tableWriter.write(heading_row);
+            tableWriter.close();
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
+
+
+        rows.remove(); // Remove already saved headings, strictly data.
+        try {
+            tableWriter = new BufferedWriter(new FileWriter(location, true));
+            while (!rows.isEmpty()) {
+                String[] columns = rows.remove();
+                if (!appendRow(table, columns)) {
+                    throw new Exception();
+                }
+            }
+            tableWriter.close();
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
+
+        return records_deleted;
+
+
+    }
+
+    public int deleteRow_equality(String table, String key, String value) {
+
+        String tablePath = currentDatabase + table.toLowerCase() + ".txt";
+        File location = new File(tablePath);
+        BufferedReader tableReader = null;
+
+        try {
+            tableReader = new BufferedReader(new FileReader(location));
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
+        String[] headings = null;
+        Integer keyIndex = null;
+        Integer selectedColumn_index = null;
+        try {
+            headings = getHeadings(table);
+        } catch (Exception exception) {
+            exception.printStackTrace();
+            return 0;
+        }
+
+        for (int headingIndex = 0; headingIndex < headings.length; headingIndex++) {
+            String heading_value = headings[headingIndex].split(" ")[0];
+            if (heading_value.matches(key) && keyIndex == null) {
+                keyIndex = headingIndex;
+            }
+
+        }
+
+        Queue<String[]> rows = new LinkedList<>();
+        int records_deleted = 0;
+
+        try {
+
+            while (true) {
+                String row = tableReader.readLine();
+                if (row != null) {
+                    String[] columns = row.split("\t");
+                    if (!filterRow_equality(columns, keyIndex, value)) {
+
+                        rows.add(columns);
+
+                    } else {
+                        records_deleted++;
+                    }
+
+                } else {
+                    break;
+                }
+
+            }
+
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
+
+        BufferedWriter tableWriter = null;
+        try {
+            tableWriter = new BufferedWriter(new FileWriter(location, false));
+            String heading_row = "";
+            for (int headingIndex = 0; headingIndex < headings.length; headingIndex++) {
+                String heading = headings[headingIndex] + "\t";
+                heading_row += heading;
+            }
+            tableWriter.write(heading_row);
+            tableWriter.close();
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
+
+
+        rows.remove(); // Remove already saved headings, strictly data.
+        try {
+            tableWriter = new BufferedWriter(new FileWriter(location, true));
+            while (!rows.isEmpty()) {
+                String[] columns = rows.remove();
+                if (!appendRow(table, columns)) {
+                    throw new Exception();
+                }
+            }
+            tableWriter.close();
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
+
+        return records_deleted;
+
+    }
+
+    public int updateTable_equality(String table, String key, String value, String selected_column, String new_value) {
+
+        String tablePath = currentDatabase + table.toLowerCase() + ".txt";
+        File location = new File(tablePath);
+        BufferedReader tableReader = null;
+
+        try {
+            tableReader = new BufferedReader(new FileReader(location));
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
+
+        // Read heading values for table
+        // Get selected_column_index and keyValueIndex
+        // Read Table
+        // As reading table values, look at selected_column_index and keyValueIndex to see if  keyValueIndex_value matches value
+        // if it matches, replace value with new_value
+        // add row to rows buffer
+        // write rows to File with apendrow
+        // return updated_record count
+
+        String[] headings = null;
+        Integer keyIndex = null;
+        Integer selectedColumn_index = null;
+        try {
+            headings = getHeadings(table);
+        } catch (Exception exception) {
+            exception.printStackTrace();
+            return 0;
+        }
+
+        for (int headingIndex = 0; headingIndex < headings.length; headingIndex++) {
+            String heading_value = headings[headingIndex].split(" ")[0];
+            if (heading_value.matches(key) && keyIndex == null) {
+                keyIndex = headingIndex;
+            }
+            if (heading_value.matches(selected_column)) {
+
+                selectedColumn_index = headingIndex;
+
+            }
+
+        }
+
+        Queue<String[]> rows = new LinkedList<>();
+        int records_modified = 0;
+
+        try {
+
+            while (true) {
+                String row = tableReader.readLine();
+                if (row != null) {
+                    String[] columns = row.split("\t");
+                    if (filterRow_equality(columns, keyIndex, value)) {
+
+                        columns = updateRow(columns, selectedColumn_index, new_value);
+                        records_modified++;
+
+                    }
+
+                    rows.add(columns);
+                } else {
+                    break;
+                }
+
+            }
+
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
+
+        BufferedWriter tableWriter = null;
+        try {
+            tableWriter = new BufferedWriter(new FileWriter(location, false));
+            String heading_row = "";
+            for (int headingIndex = 0; headingIndex < headings.length; headingIndex++) {
+                String heading = headings[headingIndex] + "\t";
+                heading_row += heading;
+            }
+            tableWriter.write(heading_row);
+            tableWriter.close();
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
+
+
+        rows.remove(); // Remove already saved headings, strictly data.
+        try {
+            tableWriter = new BufferedWriter(new FileWriter(location, true));
+            while (!rows.isEmpty()) {
+                String[] columns = rows.remove();
+                if (!appendRow(table, columns)) {
+                    throw new Exception();
+                }
+            }
+            tableWriter.close();
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
+
+        return records_modified;
+
     }
 
     public boolean appendRow(String table, String[] values) {
-        String tablePath = currentDatabase + table + ".txt";
+        String tablePath = currentDatabase + table.toLowerCase() + ".txt";
         File location = new File(tablePath);
 
         BufferedWriter tableWriter = null;
@@ -336,7 +711,7 @@ public class DatabaseAbstraction {
     }
 
     private String[] getHeadings(String table) throws Exception {
-        String tablePath = currentDatabase + table + ".txt";
+        String tablePath = currentDatabase + table.toLowerCase() + ".txt";
         File location = new File(tablePath);
 
         BufferedReader headerReader = null;
@@ -366,4 +741,37 @@ public class DatabaseAbstraction {
         return headings;
 
     }
+
+    private boolean filterRow_equality(String[] values, int key_index, String value) {
+
+            if (values[key_index].equals(value)) {
+                return true;
+            }
+
+        return false;
+
+    }
+
+    private boolean filterRow_greaterThan(String[] values, int key_index, String value) {
+
+        Float key_float = Float.parseFloat(values[key_index]);
+        Float value_float = Float.parseFloat(value);
+
+        if (key_float > value_float) {
+            return true;
+        }
+
+        return false;
+
+    }
+
+
+    private String[] updateRow(String[] values, int column_index, String value) {
+
+        values[column_index] = value;
+
+        return values;
+
+    }
+
 }
