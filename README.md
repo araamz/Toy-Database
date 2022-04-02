@@ -44,11 +44,6 @@ A example of the database structure that will be created from `PA1_test.sql` is 
         |---tbl_1.txt               [TABLE]
 ```
 
-• Design document that clarifies the followings: (5 points)
-o How your program organizes multiple databases
-o How your program manages multiple tables
-o At a high level, how you implement those required functionalities
-
 ## Application Overview
 
 The application contains three main parts being a test driver layer, the database system layer and database abstraction layer. The test driver layer is within the `Main` class and is mainly used to determine which input stream to use when reading lines of SQL statements to be executed by the database system layer. The database system layer is meant to be the abstraction of the database fuctions which is where the execution function for SQL statements is defined. The database abstraction layer is meant to hide file system operations such as creating and deleting of directories and editing of files. This layer is meant to be where primitive operations to the database are meant to be provding barely enough functionality to read and interpet data saved within the file system for database operations. Layering between the three different systems is build through composition by each layer having a instance of the previous layer.
@@ -112,3 +107,9 @@ The database abstraction layer to provide an abstraction for primitive functiona
    The function creates a new column within a selected table that takes in both the column label and type. The function defines the schema for a table by using a defined expression format of a label and type separated by a space for one column definition.
 7. **selectColumn(table: String): String[]**
    The function returns the values of column using the passed in table name. The function reads a text file within the selected database directory and returns a string of the table's schema.
+
+# Project Assignment 2 Documentation
+
+- Author: Araam Zaremehrjardi
+- Assignment: Project Assignment 2 - Basic Data Manipulation
+- Date: April 1, 2022 (EXTENDED DUE DATE - ORIGINAL MARCH 29, 2022)
