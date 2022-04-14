@@ -214,6 +214,7 @@ public class DatabaseSystem {
               return;
             }
             renderRows(rows);
+
             return;
           }
           default: {
@@ -312,7 +313,7 @@ public class DatabaseSystem {
   private Queue<String> lexicalAnalysis(String string) {
     String processed_string = string.replace("(", " ");
     processed_string = processed_string.replace(")", " ");
-    processed_string = processed_string.replace(",", "");
+    processed_string = processed_string.replace(",", " ");
     processed_string = processed_string.replace(";", "");
     processed_string = processed_string.replace("\t", " ");
     processed_string = processed_string.replace("'", "");
@@ -362,7 +363,32 @@ public class DatabaseSystem {
         	  token = "CREATE";
         	  break;
           }
+          case "values": {
+            token = "VALUES";
+            break;
+          }
+          case "on": {
+            token = "ON";
+            break;
+          }
+          case "left": {
+            token = "LEFT";
+            break;
+          }
+          case "outer": {
+            token = "OUTER";
+            break;
+          }
+          case "join": {
+            token = "JOIN";
+            break;
+          }
+          case "inner": {
+            token = "INNER";
+            break;
+          }
         }
+
         System.out.println(token);
         token_queue.add(token);
       }
