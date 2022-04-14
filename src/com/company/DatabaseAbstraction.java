@@ -11,8 +11,8 @@ import java.util.Queue;
 
 /*
     Author: Araam Zaremehrjardi
-    Date Created: March 13, 2022
-    Date Edited: April 1, 2022
+    Date Created: April 4, 2022
+    Date Edited: April 5, 2022
     Class: DatabaseAbstraction
     Purpose: The purpose of DatabaseAbstraction is to provide an abstraction for primitive functionality of the
     database. Primitive functionality is direct interaction of the file system to create, delete, and edit files for
@@ -35,6 +35,16 @@ import java.util.Queue;
     5. dropTable(table: String): boolean
     6. addColumn(table: String, label: String, type: String): boolean
     7. selectColumn(table: String): String[]
+    8. selectColumn(table: String, key: String, value: String): Queue<String[]>
+    9. deleteRow_greaterThan(table: String, key: String, value: String): int
+    10. deleteRow_equality(table: String, key: String, value: String): int
+    11. updateTable_equality(table: String, value: String, selected_column: String, new_value: String): int
+    12. appendRow(table: String, values: String[]): boolean
+    13. createRow(table: String, values: String[]): String
+    14. getHeadings(table: String): String[]
+    15. filterRow_equality(values: String[], key_index: int, value: String): boolean
+    16. filterRow_greaterThan(values: String[], key_index: int, value: String): boolean
+    17. updateRow(values: String[], column_index: int, value: String): String[]
 */
 public class DatabaseAbstraction {
 

@@ -5,8 +5,8 @@ import java.util.Queue;
 
 /*
     Author: Araam Zaremehrjardi
-    Date Created: March 13, 2022
-    Date Edited: April 1, 2022
+    Date Created: April 4, 2022
+    Date Edited: April 5, 2022
     Class: DatabaseSystem
     Purpose: The purpose of DatabaseSystem is to abstract necessary functions used by the user. These functions are
     used to configure the overarching database application itself. Currently, only necessary functionality of the
@@ -20,6 +20,8 @@ import java.util.Queue;
        interact with the file system to only do read/write operations for databases and tables within each database.
     - Functions:
     1. execute(): void
+    2. renderRows(rows: Queue<String[]>): void
+    3. lexicalAnalysis(string: String): Queue
 */
 public class DatabaseSystem {
 
@@ -227,6 +229,10 @@ public class DatabaseSystem {
             String key = token_queue.remove();
             String operation = token_queue.remove();
             String value = token_queue.remove();
+            System.out.println("Key " + key);
+            System.out.println("Operation " + operation);
+            System.out.println("Value " + value);
+            System.out.println(key);
             try {
               rows = databaseAbstraction.selectColumn(table, key, value, columns);
             } catch (Exception exception) {
@@ -251,7 +257,7 @@ public class DatabaseSystem {
             }
             row_values = new String[values.size()];
             values.toArray(row_values);
-            if (databaseAbstraction.appendRow("Product", row_values)) {
+            if (databaseAbstraction.appendRow(table, row_values)) {
               System.out.println("1 new record inserted.");
             } else {
               System.out.println("0 new record inserted.");
@@ -348,7 +354,16 @@ public class DatabaseSystem {
             token = "DELETE";
             break;
           }
+          case "table": {
+        	  token = "TABLE";
+        	  break;
+          }
+          case "create": {
+        	  token = "CREATE";
+        	  break;
+          }
         }
+        System.out.println(token);
         token_queue.add(token);
       }
     }
