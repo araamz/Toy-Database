@@ -45,10 +45,13 @@ public class TestDriver {
         command = "";
       }
       while (!command.contains(";")) {
+          if (command.contains("--")) {
+              command = "";
+            }
+          if (command.equals(".exit") || command.equals(".EXIT")) {
+              break;
+            }
         command += reader.readLine();
-        if (command.equals(".exit") || command.equals(".EXIT")) {
-          break;
-        }
       }
       if (command.equals(".exit") || command.equals(".EXIT")) {
         break;
