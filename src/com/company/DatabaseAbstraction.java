@@ -329,6 +329,281 @@ public class DatabaseAbstraction {
   }
 
   /*
+  Function: selectColumn
+  Purpose: The purpose of selectColumn() 
+   
+   
+  */
+  public Queue<String[]> selectColumn(String[] left_hand_side_table, String[] right_hand_side_table) {
+	  String lhs_tablePath = currentDatabase + left_hand_side_table[0].toLowerCase() + ".txt";
+	  String rhs_tablePath = currentDatabase + right_hand_side_table[0].toLowerCase() + ".txt";
+	  File lhs_location = new File(lhs_tablePath);
+	  File rhs_location = new File(rhs_tablePath);
+	  BufferedReader lhs_reader = null;
+	  BufferedReader rhs_reader = null;
+	  String[] headings = null;
+	  Integer lhs_keyIndex = null;
+	  Integer rhs_keyIndex = null;
+	  Queue<String[]> rows = new LinkedList<String[]>();
+	  
+	  try {
+		  lhs_reader = new BufferedReader(new FileReader(lhs_location));
+		  rhs_reader = new BufferedReader(new FileReader(rhs_location));
+		  
+	  } catch (Exception exception) {
+	      exception.printStackTrace();
+	  }
+	  
+	  try {
+		  
+		  String heading = "";
+		  
+		  String[] lhs_tableHeadings = getHeadings(left_hand_side_table[0]);
+		  String[] rhs_tableHeadings = getHeadings(right_hand_side_table[0]);
+		  
+		  for (int column_index = 0; column_index < lhs_tableHeadings.length; column_index++) {
+			  heading += lhs_tableHeadings[column_index] + "\t";
+		  }
+		  for (int column_index = 0; column_index < rhs_tableHeadings.length; column_index++) {
+			  heading += rhs_tableHeadings[column_index] + "\t";
+		  }
+		  
+		    for (int headingIndex = 0; headingIndex < lhs_tableHeadings.length; headingIndex++) {
+		        String heading_value = lhs_tableHeadings[headingIndex].split(" ")[0];
+		        if (heading_value.matches(left_hand_side_table[2])) {
+		          lhs_keyIndex = headingIndex;
+		        }
+		      }
+		    
+		    for (int headingIndex = 0; headingIndex < rhs_tableHeadings.length; headingIndex++) {
+		        String heading_value = rhs_tableHeadings[headingIndex].split(" ")[0];
+		        if (heading_value.matches(right_hand_side_table[2])) {
+		          rhs_keyIndex = headingIndex;
+		        }
+		      }
+
+		    headings = heading.split("\t");
+		    rows.add(headings);
+		    
+	} catch (Exception e) {
+		e.printStackTrace();
+	}
+	  
+	  try {
+		String lhs_cursor = "";
+		for (int lhs_lineIndex = 0; lhs_cursor != null; lhs_lineIndex++) {
+			
+			lhs_cursor = lhs_reader.readLine();
+			 
+			if ((lhs_lineIndex != 0) && (lhs_cursor != null) ) {
+				
+				rhs_reader = new BufferedReader(new FileReader(rhs_location));
+				String rhs_cursor = "";
+				for (int rhs_lineIndex = 0; rhs_cursor != null; rhs_lineIndex++) {
+					rhs_cursor = rhs_reader.readLine();
+					if ((rhs_lineIndex != 0) && (rhs_cursor != null) ) {
+					
+						String[] lhs_dataRow = lhs_cursor.split("\t");
+						String[] rhs_dataRow = rhs_cursor.split("\t");
+					
+						if (lhs_dataRow[lhs_keyIndex].equals(rhs_dataRow[rhs_keyIndex])) {
+							
+							String[] row = (lhs_cursor + rhs_cursor).split("\t");
+							rows.add(row);
+
+						}
+					
+					}
+					
+				}
+				
+			}
+			  
+		  }
+		lhs_reader.close();
+		rhs_reader.close();
+	} catch (IOException e) {
+
+		e.printStackTrace();
+	}
+	  
+	  return rows;
+	  
+  }
+  
+  public Queue<String[]> selectColumn(String[] left_hand_side_table, String[] right_hand_side_table, String join) {
+	  String lhs_tablePath = currentDatabase + left_hand_side_table[0].toLowerCase() + ".txt";
+	  String rhs_tablePath = currentDatabase + right_hand_side_table[0].toLowerCase() + ".txt";
+	  File lhs_location = new File(lhs_tablePath);
+	  File rhs_location = new File(rhs_tablePath);
+	  BufferedReader lhs_reader = null;
+	  BufferedReader rhs_reader = null;
+	  String[] headings = null;
+	  Integer lhs_keyIndex = null;
+	  Integer rhs_keyIndex = null;
+	  Queue<String[]> rows = new LinkedList<String[]>();
+	  
+	  try {
+		  lhs_reader = new BufferedReader(new FileReader(lhs_location));
+		  rhs_reader = new BufferedReader(new FileReader(rhs_location));
+		  
+	  } catch (Exception exception) {
+	      exception.printStackTrace();
+	  }
+	  
+	  try {
+		  
+		  String heading = "";
+		  
+		  String[] lhs_tableHeadings = getHeadings(left_hand_side_table[0]);
+		  String[] rhs_tableHeadings = getHeadings(right_hand_side_table[0]);
+		  
+		  for (int column_index = 0; column_index < lhs_tableHeadings.length; column_index++) {
+			  heading += lhs_tableHeadings[column_index] + "\t";
+		  }
+		  for (int column_index = 0; column_index < rhs_tableHeadings.length; column_index++) {
+			  heading += rhs_tableHeadings[column_index] + "\t";
+		  }
+		  
+		    for (int headingIndex = 0; headingIndex < lhs_tableHeadings.length; headingIndex++) {
+		        String heading_value = lhs_tableHeadings[headingIndex].split(" ")[0];
+		        if (heading_value.matches(left_hand_side_table[2])) {
+		          lhs_keyIndex = headingIndex;
+		        }
+		      }
+		    
+		    for (int headingIndex = 0; headingIndex < rhs_tableHeadings.length; headingIndex++) {
+		        String heading_value = rhs_tableHeadings[headingIndex].split(" ")[0];
+		        if (heading_value.matches(right_hand_side_table[2])) {
+		          rhs_keyIndex = headingIndex;
+		        }
+		      }
+
+		    headings = heading.split("\t");
+		    rows.add(headings);
+		    
+	} catch (Exception e) {
+		e.printStackTrace();
+	}
+	  
+	  if (join.equals("inner join")) {
+		  
+		  try {
+			String lhs_cursor = "";
+			for (int lhs_lineIndex = 0; lhs_cursor != null; lhs_lineIndex++) {
+				
+				lhs_cursor = lhs_reader.readLine();
+				 
+				if ((lhs_lineIndex != 0) && (lhs_cursor != null) ) {
+					
+					rhs_reader = new BufferedReader(new FileReader(rhs_location));
+					String rhs_cursor = "";
+					for (int rhs_lineIndex = 0; rhs_cursor != null; rhs_lineIndex++) {
+						rhs_cursor = rhs_reader.readLine();
+						if ((rhs_lineIndex != 0) && (rhs_cursor != null) ) {
+						
+							String[] lhs_dataRow = lhs_cursor.split("\t");
+							String[] rhs_dataRow = rhs_cursor.split("\t");
+						
+							if (lhs_dataRow[lhs_keyIndex].equals(rhs_dataRow[rhs_keyIndex])) {
+								
+								String[] row = (lhs_cursor + rhs_cursor).split("\t");
+								rows.add(row);
+
+							}
+						
+						}
+						
+					}
+					
+				}
+				  
+			  }
+
+		} catch (IOException e) {
+
+			e.printStackTrace();
+		}
+		  
+	  } else if (join.equals("left outer join")) {
+		  
+		  try {
+			String lhs_cursor = "";
+			for (int lhs_lineIndex = 0; lhs_cursor != null; lhs_lineIndex++) {
+				
+				boolean added_flag = false;
+				
+				lhs_cursor = lhs_reader.readLine();
+				 
+				if ((lhs_lineIndex != 0) && (lhs_cursor != null) ) {
+					
+					rhs_reader = new BufferedReader(new FileReader(rhs_location));
+					String rhs_cursor = "";
+					for (int rhs_lineIndex = 0; rhs_cursor != null; rhs_lineIndex++) {
+						rhs_cursor = rhs_reader.readLine();
+						if ((rhs_lineIndex != 0) && (rhs_cursor != null) ) {
+						
+							String[] lhs_dataRow = lhs_cursor.split("\t");
+							String[] rhs_dataRow = rhs_cursor.split("\t");
+						
+							if (lhs_dataRow[lhs_keyIndex].equals(rhs_dataRow[rhs_keyIndex])) {
+								
+								String[] row = (lhs_cursor + rhs_cursor).split("\t");
+								rows.add(row);
+								added_flag = true;
+
+							} 
+						
+						}
+						
+					}
+					
+					if (added_flag == false) {
+						String[] dataRow = new String[headings.length];
+						String[] lineData = lhs_cursor.split("\t");
+						for (int columnIndex = 0; columnIndex < dataRow.length; columnIndex++) {
+							
+							if (columnIndex < lineData.length) {
+								
+								dataRow[columnIndex] = lineData[columnIndex];
+								
+							} else {
+								
+								dataRow[columnIndex] = "";
+								
+							}
+							
+						}
+						 rows.add(dataRow);
+					}
+					
+				}
+				
+				
+				  
+			}
+
+		} catch (IOException e) {
+
+			e.printStackTrace();
+		}
+		  
+	  }
+		try {
+			lhs_reader.close();
+			rhs_reader.close();
+		} catch (IOException e) {
+
+			e.printStackTrace();
+		}
+	  return rows; 
+	  
+	  
+  }
+  
+
+  
+  /*
   Function: deleteRow_greaterThan
   Purpose: The purpose of deleteRow_greaterThan() is to delete a row within a table given a key
   identifier and key-value. The function identifies the heading of the given table and the index
@@ -651,274 +926,6 @@ public class DatabaseAbstraction {
     }
     return true;
   }
-  
-  public Queue<String[]> selectColumn(String[] left_hand_side_table, String[] right_hand_side_table) {
-	  String lhs_tablePath = currentDatabase + left_hand_side_table[0].toLowerCase() + ".txt";
-	  String rhs_tablePath = currentDatabase + right_hand_side_table[0].toLowerCase() + ".txt";
-	  File lhs_location = new File(lhs_tablePath);
-	  File rhs_location = new File(rhs_tablePath);
-	  BufferedReader lhs_reader = null;
-	  BufferedReader rhs_reader = null;
-	  String[] headings = null;
-	  Integer lhs_keyIndex = null;
-	  Integer rhs_keyIndex = null;
-	  Queue<String[]> rows = new LinkedList<String[]>();
-	  
-	  try {
-		  lhs_reader = new BufferedReader(new FileReader(lhs_location));
-		  rhs_reader = new BufferedReader(new FileReader(rhs_location));
-		  
-	  } catch (Exception exception) {
-	      exception.printStackTrace();
-	  }
-	  
-	  try {
-		  
-		  String heading = "";
-		  
-		  String[] lhs_tableHeadings = getHeadings(left_hand_side_table[0]);
-		  String[] rhs_tableHeadings = getHeadings(right_hand_side_table[0]);
-		  
-		  for (int column_index = 0; column_index < lhs_tableHeadings.length; column_index++) {
-			  heading += lhs_tableHeadings[column_index] + "\t";
-		  }
-		  for (int column_index = 0; column_index < rhs_tableHeadings.length; column_index++) {
-			  heading += rhs_tableHeadings[column_index] + "\t";
-		  }
-		  
-		    for (int headingIndex = 0; headingIndex < lhs_tableHeadings.length; headingIndex++) {
-		        String heading_value = lhs_tableHeadings[headingIndex].split(" ")[0];
-		        if (heading_value.matches(left_hand_side_table[2])) {
-		          lhs_keyIndex = headingIndex;
-		        }
-		      }
-		    
-		    for (int headingIndex = 0; headingIndex < rhs_tableHeadings.length; headingIndex++) {
-		        String heading_value = rhs_tableHeadings[headingIndex].split(" ")[0];
-		        if (heading_value.matches(right_hand_side_table[2])) {
-		          rhs_keyIndex = headingIndex;
-		        }
-		      }
-
-		    headings = heading.split("\t");
-		    rows.add(headings);
-		    
-	} catch (Exception e) {
-		e.printStackTrace();
-	}
-	  
-	  try {
-		String lhs_cursor = "";
-		for (int lhs_lineIndex = 0; lhs_cursor != null; lhs_lineIndex++) {
-			
-			lhs_cursor = lhs_reader.readLine();
-			 
-			if ((lhs_lineIndex != 0) && (lhs_cursor != null) ) {
-				
-				rhs_reader = new BufferedReader(new FileReader(rhs_location));
-				String rhs_cursor = "";
-				for (int rhs_lineIndex = 0; rhs_cursor != null; rhs_lineIndex++) {
-					rhs_cursor = rhs_reader.readLine();
-					if ((rhs_lineIndex != 0) && (rhs_cursor != null) ) {
-					
-						String[] lhs_dataRow = lhs_cursor.split("\t");
-						String[] rhs_dataRow = rhs_cursor.split("\t");
-					
-						if (lhs_dataRow[lhs_keyIndex].equals(rhs_dataRow[rhs_keyIndex])) {
-							
-							String[] row = (lhs_cursor + rhs_cursor).split("\t");
-							rows.add(row);
-
-						}
-					
-					}
-					
-				}
-				
-			}
-			  
-		  }
-		lhs_reader.close();
-		rhs_reader.close();
-	} catch (IOException e) {
-
-		e.printStackTrace();
-	}
-	  
-	  return rows;
-	  
-  }
-  
-  public Queue<String[]> selectColumn(String[] left_hand_side_table, String[] right_hand_side_table, String join) {
-	  String lhs_tablePath = currentDatabase + left_hand_side_table[0].toLowerCase() + ".txt";
-	  String rhs_tablePath = currentDatabase + right_hand_side_table[0].toLowerCase() + ".txt";
-	  File lhs_location = new File(lhs_tablePath);
-	  File rhs_location = new File(rhs_tablePath);
-	  BufferedReader lhs_reader = null;
-	  BufferedReader rhs_reader = null;
-	  String[] headings = null;
-	  Integer lhs_keyIndex = null;
-	  Integer rhs_keyIndex = null;
-	  Queue<String[]> rows = new LinkedList<String[]>();
-	  
-	  try {
-		  lhs_reader = new BufferedReader(new FileReader(lhs_location));
-		  rhs_reader = new BufferedReader(new FileReader(rhs_location));
-		  
-	  } catch (Exception exception) {
-	      exception.printStackTrace();
-	  }
-	  
-	  try {
-		  
-		  String heading = "";
-		  
-		  String[] lhs_tableHeadings = getHeadings(left_hand_side_table[0]);
-		  String[] rhs_tableHeadings = getHeadings(right_hand_side_table[0]);
-		  
-		  for (int column_index = 0; column_index < lhs_tableHeadings.length; column_index++) {
-			  heading += lhs_tableHeadings[column_index] + "\t";
-		  }
-		  for (int column_index = 0; column_index < rhs_tableHeadings.length; column_index++) {
-			  heading += rhs_tableHeadings[column_index] + "\t";
-		  }
-		  
-		    for (int headingIndex = 0; headingIndex < lhs_tableHeadings.length; headingIndex++) {
-		        String heading_value = lhs_tableHeadings[headingIndex].split(" ")[0];
-		        if (heading_value.matches(left_hand_side_table[2])) {
-		          lhs_keyIndex = headingIndex;
-		        }
-		      }
-		    
-		    for (int headingIndex = 0; headingIndex < rhs_tableHeadings.length; headingIndex++) {
-		        String heading_value = rhs_tableHeadings[headingIndex].split(" ")[0];
-		        if (heading_value.matches(right_hand_side_table[2])) {
-		          rhs_keyIndex = headingIndex;
-		        }
-		      }
-
-		    headings = heading.split("\t");
-		    rows.add(headings);
-		    
-	} catch (Exception e) {
-		e.printStackTrace();
-	}
-	  
-	  if (join.equals("inner join")) {
-		  
-		  try {
-			String lhs_cursor = "";
-			for (int lhs_lineIndex = 0; lhs_cursor != null; lhs_lineIndex++) {
-				
-				lhs_cursor = lhs_reader.readLine();
-				 
-				if ((lhs_lineIndex != 0) && (lhs_cursor != null) ) {
-					
-					rhs_reader = new BufferedReader(new FileReader(rhs_location));
-					String rhs_cursor = "";
-					for (int rhs_lineIndex = 0; rhs_cursor != null; rhs_lineIndex++) {
-						rhs_cursor = rhs_reader.readLine();
-						if ((rhs_lineIndex != 0) && (rhs_cursor != null) ) {
-						
-							String[] lhs_dataRow = lhs_cursor.split("\t");
-							String[] rhs_dataRow = rhs_cursor.split("\t");
-						
-							if (lhs_dataRow[lhs_keyIndex].equals(rhs_dataRow[rhs_keyIndex])) {
-								
-								String[] row = (lhs_cursor + rhs_cursor).split("\t");
-								rows.add(row);
-
-							}
-						
-						}
-						
-					}
-					
-				}
-				  
-			  }
-
-		} catch (IOException e) {
-
-			e.printStackTrace();
-		}
-		  
-	  } else if (join.equals("left outer join")) {
-		  
-		  try {
-			String lhs_cursor = "";
-			for (int lhs_lineIndex = 0; lhs_cursor != null; lhs_lineIndex++) {
-				
-				boolean added_flag = false;
-				
-				lhs_cursor = lhs_reader.readLine();
-				 
-				if ((lhs_lineIndex != 0) && (lhs_cursor != null) ) {
-					
-					rhs_reader = new BufferedReader(new FileReader(rhs_location));
-					String rhs_cursor = "";
-					for (int rhs_lineIndex = 0; rhs_cursor != null; rhs_lineIndex++) {
-						rhs_cursor = rhs_reader.readLine();
-						if ((rhs_lineIndex != 0) && (rhs_cursor != null) ) {
-						
-							String[] lhs_dataRow = lhs_cursor.split("\t");
-							String[] rhs_dataRow = rhs_cursor.split("\t");
-						
-							if (lhs_dataRow[lhs_keyIndex].equals(rhs_dataRow[rhs_keyIndex])) {
-								
-								String[] row = (lhs_cursor + rhs_cursor).split("\t");
-								rows.add(row);
-								added_flag = true;
-
-							} 
-						
-						}
-						
-					}
-					
-					if (added_flag == false) {
-						String[] dataRow = new String[headings.length];
-						String[] lineData = lhs_cursor.split("\t");
-						for (int columnIndex = 0; columnIndex < dataRow.length; columnIndex++) {
-							
-							if (columnIndex < lineData.length) {
-								
-								dataRow[columnIndex] = lineData[columnIndex];
-								
-							} else {
-								
-								dataRow[columnIndex] = "";
-								
-							}
-							
-						}
-						 rows.add(dataRow);
-					}
-					
-				}
-				
-				
-				  
-			}
-
-		} catch (IOException e) {
-
-			e.printStackTrace();
-		}
-		  
-	  }
-		try {
-			lhs_reader.close();
-			rhs_reader.close();
-		} catch (IOException e) {
-
-			e.printStackTrace();
-		}
-	  return rows; 
-	  
-	  
-  }
-  
 
   /*
   Function: createRow
