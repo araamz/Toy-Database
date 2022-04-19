@@ -352,7 +352,7 @@ The `delete` SQL command is implemented by using various functions to read table
 The application has two methods of entering SQL statements for database management. The application can take-in `.sql` file with SQL statements and input them into the application for interpretation through a passed-in arguement. The application must be compiled before use, instructions to compile and run are shown below.
 
 1. `javac src/com/company/*.java`
-2. `java -cp ./src com.company.TestDriver PA2_test.sql`
+2. `java -cp ./src com.company.TestDriver PA3_test.sql`
 
 ## Database Organization
 
