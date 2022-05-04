@@ -36,15 +36,17 @@ import java.util.Queue;
     6. addColumn(table: String, label: String, type: String): boolean
     7. selectColumn(table: String): String[]
     8. selectColumn(table: String, key: String, value: String): Queue<String[]>
-    9. deleteRow_greaterThan(table: String, key: String, value: String): int
-    10. deleteRow_equality(table: String, key: String, value: String): int
-    11. updateTable_equality(table: String, value: String, selected_column: String, new_value: String): int
-    12. appendRow(table: String, values: String[]): boolean
-    13. createRow(table: String, values: String[]): String
-    14. getHeadings(table: String): String[]
-    15. filterRow_equality(values: String[], key_index: int, value: String): boolean
-    16. filterRow_greaterThan(values: String[], key_index: int, value: String): boolean
-    17. updateRow(values: String[], column_index: int, value: String): String[]
+    9.
+    10.
+    11. deleteRow_greaterThan(table: String, key: String, value: String): int
+    12. deleteRow_equality(table: String, key: String, value: String): int
+    13. updateTable_equality(table: String, value: String, selected_column: String, new_value: String): int
+    14. appendRow(table: String, values: String[]): boolean
+    15. createRow(table: String, values: String[]): String
+    16. getHeadings(table: String): String[]
+    17. filterRow_equality(values: String[], key_index: int, value: String): boolean
+    18. filterRow_greaterThan(values: String[], key_index: int, value: String): boolean
+    19. updateRow(values: String[], column_index: int, value: String): String[]
 */
 public class DatabaseAbstraction {
 
@@ -330,9 +332,18 @@ public class DatabaseAbstraction {
 
   /*
   Function: selectColumn
-  Purpose: The purpose of selectColumn() 
-   
-   
+  Purpose: The purpose of selectColumn() is to select rows within a table given a set of variables of a lhs 
+  table and rhs table. The functions then use given parameters of each respective side being table name, variable 
+  symbol, and column name. The function uses the given information to generate a table with that matches a 
+  equality condition of the selected column from each side. When the equality condition is not met, the row
+  being scanned between the two files is ignored and not added. Scanning between the files occurs by first 
+  accessing the files in the File System with the lhs table driving the scanning. Each row of the lhs table is compared
+  to all rows of the rhs table during scanning. Once complete, both files are closed with the rows buffer 
+  returned for printing. 
+  - Parameters:
+  1. left_hand_side_table: String[]
+  2. right_hand_side_table: String[]
+  - Return Type: Queue<String[]>
   */
   public Queue<String[]> selectColumn(String[] left_hand_side_table, String[] right_hand_side_table) {
 	  String lhs_tablePath = currentDatabase + left_hand_side_table[0].toLowerCase() + ".txt";
@@ -431,6 +442,21 @@ public class DatabaseAbstraction {
 	  
   }
   
+  /*
+  Function: selectColumn
+  Purpose: The purpose of selectColumn() is to select rows within a table given a set of variables of lhs
+  table and rhs table. This version of selectColumn() provides join options being either "inner join" or
+  "left outer join."  The function uses the given information to generate a table with that matches a 
+  equality condition of the selected column from each side. The equality condition being different based 
+  upon the given join option. When the equality condition is not met, the row being scanned between the two 
+  files is ignored and not added. Scanning between the files occurs by first accessing the files in the File 
+  System with the lhs table driving the scanning. Each row of the lhs table is compared to all rows of the 
+  rhs table during scanning. Once complete, both files are closed with the rows buffer returned for printing. 
+  - Parameters:
+  1. left_hand_side_table: String[]
+  2. right_hand_side_table: String[]
+  - Return Type: Queue<String[]>
+  */  
   public Queue<String[]> selectColumn(String[] left_hand_side_table, String[] right_hand_side_table, String join) {
 	  String lhs_tablePath = currentDatabase + left_hand_side_table[0].toLowerCase() + ".txt";
 	  String rhs_tablePath = currentDatabase + right_hand_side_table[0].toLowerCase() + ".txt";
@@ -600,8 +626,6 @@ public class DatabaseAbstraction {
 	  
 	  
   }
-  
-
   
   /*
   Function: deleteRow_greaterThan
