@@ -7,8 +7,8 @@ import java.io.InputStreamReader;
 
 /*
     Author: Araam Zaremehrjardi
-    Date Created: March 13, 2022
-    Date Edited: April 1, 2022
+    Date Created: April 4, 2022
+    Date Edited: April 5, 2022
     Class: TestDriver
     Purpose: The purpose of TestDriver is to be a starting point for the application by opening a file or standard input
     stream for reading SQL statements. The TestDriver continuously reads input from either stream until the application
@@ -45,10 +45,13 @@ public class TestDriver {
         command = "";
       }
       while (!command.contains(";")) {
+          if (command.contains("--")) {
+              command = "";
+            }
+          if (command.equals(".exit") || command.equals(".EXIT")) {
+              break;
+            }
         command += reader.readLine();
-        if (command.equals(".exit") || command.equals(".EXIT")) {
-          break;
-        }
       }
       if (command.equals(".exit") || command.equals(".EXIT")) {
         break;

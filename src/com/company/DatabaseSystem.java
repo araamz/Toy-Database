@@ -1,12 +1,13 @@
 package com.company;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
 
 /*
     Author: Araam Zaremehrjardi
-    Date Created: March 13, 2022
-    Date Edited: April 1, 2022
+    Date Created: April 4, 2022
+    Date Edited: April 5, 2022
     Class: DatabaseSystem
     Purpose: The purpose of DatabaseSystem is to abstract necessary functions used by the user. These functions are
     used to configure the overarching database application itself. Currently, only necessary functionality of the
@@ -20,6 +21,8 @@ import java.util.Queue;
        interact with the file system to only do read/write operations for databases and tables within each database.
     - Functions:
     1. execute(): void
+    2. renderRows(rows: Queue<String[]>): void
+    3. lexicalAnalysis(string: String): Queue
 */
 public class DatabaseSystem {
 
@@ -201,17 +204,116 @@ public class DatabaseSystem {
         String column = token_queue.remove();
         switch (column) {
           case "*": {
+
             // Remove "FROM" token from parser processing.
             token_queue.remove();
-            String table = token_queue.remove();
-            Queue<String[]> rows = null;
-            try {
-              rows = databaseAbstraction.selectColumn(table);
-            } catch (Exception exception) {
-              System.out.println("!Failed to query table " + table + " because it does not exist");
-              return;
+            
+            if (token_queue.size() == 8) {
+            	
+            	Queue<String[]> tables = new LinkedList<>();
+            	
+            	String string = "";
+            	while (!token_queue.peek().contains("WHERE")) {
+
+            		String[] search_parameters = new String[3];
+            		
+            		for (int parameter_index = 0; parameter_index < 2; parameter_index++) {
+            			
+            			String parameter = token_queue.remove();
+            			search_parameters[parameter_index] = parameter;
+            			
+            		}
+            		
+            		tables.add(search_parameters);
+           
+            	}
+            	
+            	// Remove "WHERE" token from parser processing. 
+            	token_queue.remove();
+            	
+            	String lhs_parameter = token_queue.remove();
+            	String operation = token_queue.remove();
+            	String rhs_parameter = token_queue.remove();
+
+            	// Left Hand Side parameter processing
+            	String[] lhs_table = tables.remove();
+            	String lhs_column = lhs_parameter.split("\\.")[1];
+            	lhs_table[2] = lhs_column;
+            	// Right Hand Side parameter processing.
+            	String[] rhs_table = tables.remove();
+            	String rhs_column = rhs_parameter.split("\\.")[1];
+            	rhs_table[2] = rhs_column;
+
+            	Queue<String[]> rows = databaseAbstraction.selectColumn(lhs_table, rhs_table);
+            	renderRows(rows);
+            	
+            	
+            } else if (token_queue.size() == 10) {
+            	
+            	String[] lhs_table = new String[3];
+            	String[] rhs_table = new String[3];
+            	
+            	lhs_table[0] = token_queue.remove();
+            	lhs_table[1] = token_queue.remove();
+            	
+            	// Remove "INNER JOIN" tokens from parser processing.
+            	token_queue.remove();
+            	token_queue.remove();
+            	
+            	rhs_table[0] = token_queue.remove();
+            	rhs_table[1] = token_queue.remove();
+            	
+            	// Remove "ON" token from parser processing.
+            	token_queue.remove();
+            	
+            	lhs_table[2] = token_queue.remove().split("\\.")[1];
+            	
+            	String operation = token_queue.remove();
+            	
+            	rhs_table[2] = token_queue.remove().split("\\.")[1];
+            	
+            	Queue<String[]> rows = databaseAbstraction.selectColumn(lhs_table, rhs_table, "inner join");
+            	renderRows(rows);
+            	
+            	
+            } else if (token_queue.size() == 11) {
+            	String[] lhs_table = new String[3];
+            	String[] rhs_table = new String[3];
+            	
+            	lhs_table[0] = token_queue.remove();
+            	lhs_table[1] = token_queue.remove();
+            	
+            	// Remove "LEFT OUTER JOIN" tokens from parser processing.
+            	token_queue.remove();
+            	token_queue.remove();
+            	token_queue.remove();
+            	
+            	rhs_table[0] = token_queue.remove();
+            	rhs_table[1] = token_queue.remove();
+            	
+            	// Remove "ON" token from parser processing.
+            	token_queue.remove();
+            	
+            	lhs_table[2] = token_queue.remove().split("\\.")[1];
+            	
+            	String operation = token_queue.remove();
+            	
+            	rhs_table[2] = token_queue.remove().split("\\.")[1];
+            	
+            	Queue<String[]> rows = databaseAbstraction.selectColumn(lhs_table, rhs_table, "left outer join");
+            	renderRows(rows);
+            } else {
+                String table = token_queue.remove();
+                Queue<String[]> rows = null;
+                try {
+                    rows = databaseAbstraction.selectColumn(table);
+                  } catch (Exception exception) {
+                    System.out.println("!Failed to query table " + table + " because it does not exist");
+                    return;
+                  }
+                  renderRows(rows);
             }
-            renderRows(rows);
+            
             return;
           }
           default: {
@@ -227,6 +329,10 @@ public class DatabaseSystem {
             String key = token_queue.remove();
             String operation = token_queue.remove();
             String value = token_queue.remove();
+            System.out.println("Key " + key);
+            System.out.println("Operation " + operation);
+            System.out.println("Value " + value);
+            System.out.println(key);
             try {
               rows = databaseAbstraction.selectColumn(table, key, value, columns);
             } catch (Exception exception) {
@@ -251,7 +357,7 @@ public class DatabaseSystem {
             }
             row_values = new String[values.size()];
             values.toArray(row_values);
-            if (databaseAbstraction.appendRow("Product", row_values)) {
+            if (databaseAbstraction.appendRow(table, row_values)) {
               System.out.println("1 new record inserted.");
             } else {
               System.out.println("0 new record inserted.");
@@ -306,7 +412,7 @@ public class DatabaseSystem {
   private Queue<String> lexicalAnalysis(String string) {
     String processed_string = string.replace("(", " ");
     processed_string = processed_string.replace(")", " ");
-    processed_string = processed_string.replace(",", "");
+    processed_string = processed_string.replace(",", " ");
     processed_string = processed_string.replace(";", "");
     processed_string = processed_string.replace("\t", " ");
     processed_string = processed_string.replace("'", "");
@@ -346,6 +452,38 @@ public class DatabaseSystem {
           }
           case "delete": {
             token = "DELETE";
+            break;
+          }
+          case "table": {
+        	  token = "TABLE";
+        	  break;
+          }
+          case "create": {
+        	  token = "CREATE";
+        	  break;
+          }
+          case "values": {
+            token = "VALUES";
+            break;
+          }
+          case "on": {
+            token = "ON";
+            break;
+          }
+          case "left": {
+            token = "LEFT";
+            break;
+          }
+          case "outer": {
+            token = "OUTER";
+            break;
+          }
+          case "join": {
+            token = "JOIN";
+            break;
+          }
+          case "inner": {
+            token = "INNER";
             break;
           }
         }
