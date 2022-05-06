@@ -13,8 +13,8 @@ import java.util.Queue;
 
 /*
     Author: Araam Zaremehrjardi
-    Date Created: April 4, 2022
-    Date Edited: April 5, 2022
+    Date Created: April 21, 2022
+    Date Edited: May 6, 2022
     Class: DatabaseAbstraction
     Purpose: The purpose of DatabaseAbstraction is to provide an abstraction for primitive functionality of the
     database. Primitive functionality is direct interaction of the file system to create, delete, and edit files for
@@ -29,6 +29,15 @@ import java.util.Queue;
        Purpose: The variable databasesDirectory is used to define the main directory that stores all the databases
        created by the application. Each directory within the defined path for databasesDirectory is a database and files
        within the directory are tables for that specific database.
+    3. transactionEnable: boolean
+       Purpose: The variable transactionEnable is used to define the enabling of transaction mode
+       in which data is not directly wrote into the database until it is committed. Behavior of the
+       Database Abstraction layer changes based upon the value of the bit.
+    4. errorOccurance: boolean
+       Purpose: the varaible errorOccurance is used to define if a error has occured in which is
+       used to rollback changes in the database. This changes the commit behavior of the
+       Database Abstraction layer in which does not persist changes to the database when in
+       transaction mode.
     - Functions:
     1. setCurrentDatabase(database: String): String
     2. createDatabase(database: String): boolean
@@ -38,8 +47,8 @@ import java.util.Queue;
     6. addColumn(table: String, label: String, type: String): boolean
     7. selectColumn(table: String): String[]
     8. selectColumn(table: String, key: String, value: String): Queue<String[]>
-    9.
-    10.
+    9. selectColumn(left_hand_side_table: String[], right_hand_side_table: String[])
+    10. selectColumn(left_hand_side_table: String[], right_hand_side_table: String[], join: String)
     11. deleteRow_greaterThan(table: String, key: String, value: String): int
     12. deleteRow_equality(table: String, key: String, value: String): int
     13. updateTable_equality(table: String, value: String, selected_column: String, new_value: String): int
@@ -49,13 +58,20 @@ import java.util.Queue;
     17. filterRow_equality(values: String[], key_index: int, value: String): boolean
     18. filterRow_greaterThan(values: String[], key_index: int, value: String): boolean
     19. updateRow(values: String[], column_index: int, value: String): String[]
+    20. beginTransaction(): boolean
+    21. commitTransaction(): boolean
+    22. create_cacheTable(table: String): boolean
+    23. lockTable(table: String): boolean
+    24. unlockTable(table: String): boolean
+    25. tableLocked(table: String): boolean
+    26. persist_cacheTable(table: String): boolean
 */
 public class DatabaseAbstraction {
 
   private static final String databasesDirectory = "databases/";
   private String currentDatabase = null;
-  private boolean transaction_enable = false;
-  private boolean error_occurance = false;
+  private boolean transactionEnable = false;
+  private boolean errorOccurance = false;
 
   public DatabaseAbstraction() {
   }
@@ -838,15 +854,15 @@ public class DatabaseAbstraction {
 
     String tablePath = currentDatabase + table.toLowerCase() + ".txt";
 
-    if (transaction_enable) {
+    if (transactionEnable) {
       create_cacheTable(table);
       tablePath = currentDatabase + table.toLowerCase() + "_cache.txt";
     }
 
-    if (transaction_enable && tableLocked(table)) {
-      error_occurance = true;
+    if (transactionEnable && tableLocked(table)) {
+      errorOccurance = true;
       return -1;
-    } else if (transaction_enable && !tableLocked(table)) {
+    } else if (transactionEnable && !tableLocked(table)) {
       lockTable(table);
     }
 
@@ -914,7 +930,7 @@ public class DatabaseAbstraction {
       tableWriter = new BufferedWriter(new FileWriter(location, true));
       while (!rows.isEmpty()) {
         String[] columns = rows.remove();
-        if (transaction_enable) {
+        if (transactionEnable) {
           if (!appendRow(table + "_cache", columns)) {
             throw new Exception();
           }
@@ -1102,18 +1118,39 @@ public class DatabaseAbstraction {
   }
 
   /*
-  Function:
+  Function: beginTransaction
+  Purpose: The purpose of beginTransaction() is for operations of the Database Abstraction layer to
+  change based upon the change of a mode bit being "transaction_enable." If enabled, the function
+  modifies targeted files in the file system to allow for locking of table files and to allow for
+  changes of files to not be persisted in the disk until changes are to be comiited by the
+  transaction.
+  - Parameters:
   */
   public boolean beginTransaction() {
 
-    transaction_enable = true;
+    transactionEnable = true;
     return true;
 
   }
 
+  /*
+  Function: commitTransaction
+  Purpose: The purpose of commitTransaction() is for operations of the Database Abstraction layer to
+  fully transfer changes to the database from persisted cache table files to the database table
+  files and to unlock tables for other processes. The function fully implements atomic functionality
+  of changes made to database tables and readings the application to end a transaction enabled
+  state. The application firstly checks to ensure a error has not occurred between the start and end
+  of the transaction and to ensure a transaction is active. If one or both these checks fails, the
+  transaction is aborted and changes are not persisted. If not aborted, the application reads cache
+  files from the database yet to be committed saving table names associated to the cache files.
+  Using the helper functions, the application then persists each cache file to its respective table,
+  and finally for clean up operations removes any locks on tables allowing other processes to write
+  to the tables.
+  - Parameters:
+  */
   public boolean commitTransaction() {
 
-    if (error_occurance || !transaction_enable) {
+    if (errorOccurance || !transactionEnable) {
       return false;
     }
     String databasesPath = currentDatabase;
@@ -1147,6 +1184,18 @@ public class DatabaseAbstraction {
 
   }
 
+  /*
+  Function: create_cacheTable
+  Purpose: The purpose of create_cacheTable() is for operations in creating a cacheTable during
+  database write operations when in transaction mode. When the application has transaction mode
+  enabled, changes made to the database are not persisted but rather saved in cache files that are
+  used in time coming for committing changes. This function abstracts the needed code for creating
+  and ensuring the existence of a cache table file. If successful, the function returns a true
+  value denoting a cacheTable was created otherwise returns false. Failures encountered derive from
+  the file system being either the cacheTable is already created or another error has occurred.
+  - Parameters:
+  1. table: String
+  */
   private boolean create_cacheTable(String table) {
 
     String cachePath = currentDatabase + table.toLowerCase() + "_cache.txt";
@@ -1172,6 +1221,16 @@ public class DatabaseAbstraction {
 
   }
 
+  /*
+  Function: lockTable
+  Purpose: The purpose of lockTable() is to abstract operations required for locking a table in
+  which guarantees no other process can access the table unless the lock is removed. The lock for
+  a table is established through a file in which takes a table name and then adds "_lock" to denote
+  to other processes the application is currently using the table. When the table is locked, the
+  function fails and return false, otherwise the function creates a lock file and is successful.
+  - Parameters:
+  1. table: String
+  */
   private boolean lockTable(String table) {
 
     if (tableLocked(table)) {
@@ -1191,6 +1250,17 @@ public class DatabaseAbstraction {
 
   }
 
+  /*
+  Function: unlockTable
+  Purpose: The purpose of unlockTable() is to abstract operations required for unlocking a table in
+  which guarantees other process can access the table. The function removes the lock file given a
+  table name. Assuming the lock exists upon a table file, the file is removed and thus the function
+  returns true for a table being unlocked. If the functions returns false, it denotes nothing was
+  unlocked due to the table either not existing or the lock for the table not existing hence the
+  table was never locked in the first place.
+  - Parameters:
+  1. table: String
+  */
   private boolean unlockTable(String table) {
 
     if (!tableLocked(table)) {
@@ -1203,6 +1273,17 @@ public class DatabaseAbstraction {
     return location.delete();
 
   }
+
+  /*
+  Function: tableLocked
+  Purpose: The purpose of tableLocked() is to abstract operations required for checking to see if a
+  table has a lock on the table file. The function is used as a helper function in which abstract
+  file operations for checking if the lock file for a table exists. If the table lock file exists,
+  the function returns true otherwise if the lock does not exist and thus the table is unlocked then
+  it returns false.
+  - Parameters:
+  1. table: String
+  */
   private boolean tableLocked(String table) {
 
     String tablePath = currentDatabase + table.toLowerCase() + "_lock";
@@ -1219,6 +1300,19 @@ public class DatabaseAbstraction {
 
   }
 
+  /*
+  Function: persist_cacheTable
+  Purpose: The purpose of persist_cacheTable() is to abstract operations required for swapping
+  a cache table file with a existing table file. This replacement is meant to persist data saved
+  from a running transaction and is meant to be a helper function that aids in the commit of
+  changes during a transaction. The function opens two file paths being for the table file and the
+  cache table file in which it checks for the existence of both, otherwise the function fails and
+  return false. Deleting the table file, the function uses the Files API to create and copy
+  the cache table file to a new table file. Once completed, the function deletes the cache table
+  file and returns true for a successful data persist response.
+  - Parameters:
+  1. table: Strings
+  */
   private boolean persist_cacheTable(String table) {
 
     String cachePath = currentDatabase + table.toLowerCase() + "_cache.txt";
