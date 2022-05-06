@@ -1180,6 +1180,8 @@ public class DatabaseAbstraction {
       };
     }
 
+    transactionEnable = false;
+
     return true;
 
   }
