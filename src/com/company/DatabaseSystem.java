@@ -1,6 +1,5 @@
 package com.company;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -26,7 +25,7 @@ import java.util.Queue;
 */
 public class DatabaseSystem {
 
-  private final DatabaseAbstraction databaseAbstraction;
+  private DatabaseAbstraction databaseAbstraction;
 
   public DatabaseSystem() {
     databaseAbstraction = new DatabaseAbstraction();
@@ -49,6 +48,26 @@ public class DatabaseSystem {
   public void execute(String command) {
     Queue<String> token_queue = lexicalAnalysis(command);
     switch (token_queue.remove()) {
+
+      case "BEGIN": {
+
+        // Remove "TRANSACTION" token from parser processing.
+        token_queue.remove();
+
+        databaseAbstraction.beginTransaction();
+        System.out.println("Transaction starts.");
+        return;
+      }
+
+      case "COMMIT": {
+        if (databaseAbstraction.commitTransaction()) {
+          System.out.println("Transaction committed.");
+        } else {
+          System.out.println("Transaction abort.");
+        }
+        return;
+      }
+
       case "CREATE": {
         switch (token_queue.remove()) {
           case "DATABASE": {
@@ -193,7 +212,10 @@ public class DatabaseSystem {
                 selected_column, new_value);
             if (records_modified == 1) {
               System.out.println(records_modified + " record modified.");
-            } else {
+            } else if (records_modified == -1) {
+              System.out.println("Error: Table " + table + " is locked!");
+            }
+            else {
               System.out.println(records_modified + " records modified.");
             }
           }
@@ -484,6 +506,18 @@ public class DatabaseSystem {
           }
           case "inner": {
             token = "INNER";
+            break;
+          }
+          case "begin": {
+            token = "BEGIN";
+            break;
+          }
+          case "transaction": {
+            token = "TRANSACTION";
+            break;
+          }
+          case "commit": {
+            token = "COMMIT";
             break;
           }
         }

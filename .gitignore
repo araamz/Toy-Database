@@ -8,3 +8,6 @@ src/com/company/DatabaseAbstraction.class
 src/com/company/DatabaseSystem.class
 src/com/company/TestDriver.class
 databases
+.classpath
+.gitignore
+.project
