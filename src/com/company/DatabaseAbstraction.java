@@ -6,6 +6,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -52,6 +54,8 @@ public class DatabaseAbstraction {
 
   private static final String databasesDirectory = "databases/";
   private String currentDatabase = null;
+  private boolean transaction_enable = false;
+  private boolean error_occurance = false;
 
   public DatabaseAbstraction() {
   }
@@ -831,7 +835,21 @@ public class DatabaseAbstraction {
   */
   public int updateTable_equality(String table, String key, String value, String selected_column,
       String new_value) {
+
     String tablePath = currentDatabase + table.toLowerCase() + ".txt";
+
+    if (transaction_enable) {
+      create_cacheTable(table);
+      tablePath = currentDatabase + table.toLowerCase() + "_cache.txt";
+    }
+
+    if (transaction_enable && tableLocked(table)) {
+      error_occurance = true;
+      return -1;
+    } else if (transaction_enable && !tableLocked(table)) {
+      lockTable(table);
+    }
+
     File location = new File(tablePath);
     BufferedReader tableReader = null;
     String[] headings = null;
@@ -896,8 +914,14 @@ public class DatabaseAbstraction {
       tableWriter = new BufferedWriter(new FileWriter(location, true));
       while (!rows.isEmpty()) {
         String[] columns = rows.remove();
-        if (!appendRow(table, columns)) {
-          throw new Exception();
+        if (transaction_enable) {
+          if (!appendRow(table + "_cache", columns)) {
+            throw new Exception();
+          }
+        } else {
+          if (!appendRow(table, columns)) {
+            throw new Exception();
+          }
         }
       }
       tableWriter.close();
@@ -1076,4 +1100,155 @@ public class DatabaseAbstraction {
     values[column_index] = value;
     return values;
   }
+
+  /*
+  Function:
+  */
+  public boolean beginTransaction() {
+
+    transaction_enable = true;
+    return true;
+
+  }
+
+  public boolean commitTransaction() {
+
+    if (error_occurance || !transaction_enable) {
+      return false;
+    }
+    String databasesPath = currentDatabase;
+    File location = new File(databasesPath);
+    String[] directory_files_names = location.list();
+    ArrayList<String> cache_table_names = new ArrayList<>();
+
+    for (int file_index = 0; file_index < location.list().length; file_index++) {
+
+      if (directory_files_names[file_index].contains("_cache.txt")) {
+
+        cache_table_names.add(directory_files_names[file_index].split("_cache.txt")[0]);
+
+      }
+
+    }
+
+    for (int table_index = 0; table_index < cache_table_names.size(); table_index++) {
+      if (!persist_cacheTable(cache_table_names.get(table_index))) {
+        return false;
+      };
+    }
+
+    for (int table_index = 0; table_index < cache_table_names.size(); table_index++) {
+      if (!unlockTable(cache_table_names.get(table_index))) {
+        return false;
+      };
+    }
+
+    return true;
+
+  }
+
+  private boolean create_cacheTable(String table) {
+
+    String cachePath = currentDatabase + table.toLowerCase() + "_cache.txt";
+    File cacheLocation = new File(cachePath);
+
+    if (cacheLocation.exists()) {
+      return false;
+    } else {
+
+      String tablePath = currentDatabase + table.toLowerCase() + ".txt";
+      File tableLocation = new File(tablePath);
+
+      try {
+        Files.copy(tableLocation.toPath(), cacheLocation.toPath());
+      } catch (IOException exception) {
+        exception.printStackTrace();
+        return false;
+      }
+
+    }
+
+    return true;
+
+  }
+
+  private boolean lockTable(String table) {
+
+    if (tableLocked(table)) {
+      return false;
+    }
+
+    String tablePath = currentDatabase + table.toLowerCase() + "_lock";
+    File location = new File(tablePath);
+
+    try {
+      location.createNewFile();
+      return true;
+    } catch (IOException exception) {
+      exception.printStackTrace();
+      return false;
+    }
+
+  }
+
+  private boolean unlockTable(String table) {
+
+    if (!tableLocked(table)) {
+      return false;
+    }
+
+    String tablePath = currentDatabase + table.toLowerCase() + "_lock";
+    File location = new File(tablePath);
+
+    return location.delete();
+
+  }
+  private boolean tableLocked(String table) {
+
+    String tablePath = currentDatabase + table.toLowerCase() + "_lock";
+
+    File location = new File(tablePath);
+
+    if (location.exists()) {
+
+      return true;
+
+    }
+
+    return false;
+
+  }
+
+  private boolean persist_cacheTable(String table) {
+
+    String cachePath = currentDatabase + table.toLowerCase() + "_cache.txt";
+    File cacheLocation = new File(cachePath);
+
+    String tablePath = currentDatabase + table.toLowerCase() + ".txt";
+    File tableLocation = new File(tablePath);
+
+    if (!tableLocation.exists()) {
+
+      return false;
+    }
+
+    if (!cacheLocation.exists()) {
+      return false;
+    }
+
+    tableLocation.delete();
+
+    try {
+      Files.copy(cacheLocation.toPath(), tableLocation.toPath());
+    } catch (IOException exception) {
+      exception.printStackTrace();
+      return false;
+    }
+
+    cacheLocation.delete();
+
+    return true;
+
+  }
+
 }
